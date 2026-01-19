@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Box, Text, useApp } from "ink";
 import { v4 as uuidv4 } from "uuid";
-import ChatView from "./ChatView.js";
-import InputBox from "./InputBox.js";
-import { UIMessage } from "./types.js";
+import ChatView from "./ChatView";
+import InputBox from "./InputBox";
+import { UIMessage } from "./types";
+import { runAgent } from "../runAgent";
 
 const makeThreadId = () => `sched_${uuidv4().slice(0, 6)}`;
 
@@ -17,28 +18,42 @@ export default function App() {
     const handleSubmit = async (text: string) => {
         const trimmed = text.trim();
 
+        if (!trimmed) return;
+
+        // Exit command
         if (trimmed === "/exit") {
             setMessages((m) => [
                 ...m,
                 { role: "agent", text: "Goodbye. Session ended." }
             ]);
-
             setTimeout(() => exit(), 300);
             return;
         }
 
+        // Show user message immediately
         setMessages((m) => [...m, { role: "user", text: trimmed }]);
         setThinking(true);
 
-        // Placeholder for agent
-        await new Promise((r) => setTimeout(r, 600));
+        try {
+            const result = await runAgent(threadId, trimmed);
 
-        setMessages((m) => [
-            ...m,
-            { role: "agent", text: "Got it. Agent logic coming next." }
-        ]);
-        setThinking(false);
+            setMessages((m) => [
+                ...m,
+                { role: "agent", text: result.response }
+            ]);
+        } catch (err) {
+            setMessages((m) => [
+                ...m,
+                {
+                    role: "agent",
+                    text: "Something went wrong talking to the agent."
+                }
+            ]);
+        } finally {
+            setThinking(false);
+        }
     };
+
 
 
     return (
