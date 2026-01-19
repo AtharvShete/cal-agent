@@ -1,0 +1,30 @@
+{
+	"name": "cal-agent",
+	"version": "1.0.0",
+	"description": "",
+	"type": "module",
+	"main": "src/index.ts",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "tsx src/index.tsx"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.20.0",
+	"dependencies": {
+		"@langchain/core": "^1.1.15",
+		"@langchain/langgraph": "^1.1.0",
+		"ink": "^6.6.0",
+		"ink-text-input": "^6.0.0",
+		"react": "^19.2.3",
+		"react-dom": "^19.2.3"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.9",
+		"@types/react": "^19.2.8",
+		"@types/react-dom": "^19.2.3",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3"
+	}
+}
