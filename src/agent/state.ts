@@ -1,18 +1,21 @@
 import { StateSchema, MessagesValue, ReducedValue } from "@langchain/langgraph";
 import * as z from "zod";
 
-export type Intent = "schedule" | "cancel" | "query" | "unknown";
+export type Intent = "schedule" | "cancel" | "query" | "find_slots" | "unknown";
 
 export const AgentState = new StateSchema({
 	threadId: z.string(),
 	userInput: z.string().optional(),
-	intent: z.enum(["schedule", "cancel", "query", "unknown"]).optional(),
+	intent: z
+		.enum(["schedule", "cancel", "query", "find_slots", "unknown"])
+		.optional(),
 	eventDetails: z
 		.object({
 			title: z.string().optional().nullable(),
 			date: z.string().optional().nullable(),
 			startTime: z.string().optional().nullable(),
 			endTime: z.string().optional().nullable(),
+			duration: z.number().optional().nullable(), // Duration in minutes
 		})
 		.optional(),
 	messages: new ReducedValue(
@@ -42,6 +45,7 @@ export interface EventDetails {
 	date?: string | null;
 	startTime?: string | null;
 	endTime?: string | null;
+	duration?: number | null;
 }
 
 export interface AgentStateType {

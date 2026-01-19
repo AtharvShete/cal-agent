@@ -3,6 +3,7 @@ import {
 	addEventToCalendar,
 	deleteEventFromCalendar,
 	listEvents,
+	findAvailableSlots,
 } from "../tools/calendar";
 
 export async function manageCalendar(
@@ -12,7 +13,30 @@ export async function manageCalendar(
 
 	// Destructure properties from eventDetails (with default empty object to avoid errors if undefined)
 	// Note: We need to handle cases where eventDetails is undefined but intent is valid (though our flow should ensure details are extracted)
-	const { title, date, startTime, endTime } = eventDetails || {};
+	const { title, date, startTime, endTime, duration } = eventDetails || {};
+
+	if (intent === "find_slots") {
+		if (!date) {
+			return {
+				messages: [
+					{
+						role: "agent",
+						text: "What date would you like me to find available times for?",
+					},
+				],
+			};
+		}
+		const durationMins = duration || 30; // Default to 30 minutes
+		const result = await findAvailableSlots(date, durationMins);
+		return {
+			messages: [
+				{
+					role: "agent",
+					text: result,
+				},
+			],
+		};
+	}
 
 	if (intent === "query") {
 		if (!date) {

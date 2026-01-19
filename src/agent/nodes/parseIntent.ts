@@ -33,12 +33,18 @@ export async function parseIntent(
 
 	const prompt = `
 Classify the user's intent into one of:
-- schedule
-- cancel
-- query
+- schedule (user wants to add/create a meeting with specific time)
+- cancel (user wants to remove/delete an event)
+- query (user wants to see what's scheduled)
+- find_slots (user wants to find available times or asks "when can I meet" without specifying time)
 - unknown
 
-Use the recent conversation history to understand context (e.g., "cancel that" refers to a previous event).
+Examples:
+- "Schedule a meeting at 3pm" → schedule
+- "When can I meet with John on Monday?" → find_slots
+- "Find available times for a 30 minute meeting" → find_slots
+- "What do I have today?" → query
+- "Cancel the standup" → cancel
 
 History:
 ${recentHistory}
@@ -54,7 +60,12 @@ Respond with only the label.
 	const raw = result.content.toString().trim().toLowerCase();
 
 	const intent: Intent =
-		raw === "schedule" || raw === "cancel" || raw === "query" ? raw : "unknown";
+		raw === "schedule" ||
+		raw === "cancel" ||
+		raw === "query" ||
+		raw === "find_slots"
+			? raw
+			: "unknown";
 
 	return { intent };
 }

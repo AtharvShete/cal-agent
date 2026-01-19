@@ -53,6 +53,8 @@ Rules:
 - For QUERY intent: you mainly need the date field
 - For CANCEL intent: you need title and date
 - For SCHEDULE intent: you need title, date, startTime
+- For FIND_SLOTS intent: you need date and duration (in minutes)
+- Extract duration from phrases like "30 minute meeting" → 30, "1 hour call" → 60, "2 hours" → 120
 
 Conversation History:
 ${recentHistory}
@@ -64,7 +66,8 @@ Return JSON with these fields (use null for unknown):
   "title": "event name or null",
   "date": "YYYY-MM-DD or null",
   "startTime": "H:MM AM/PM or null",
-  "endTime": "H:MM AM/PM or null"
+  "endTime": "H:MM AM/PM or null",
+  "duration": number in minutes or null (e.g., 30 for 30 minutes, 60 for 1 hour)
 }
 `;
 

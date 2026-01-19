@@ -274,3 +274,132 @@ export async function listEvents(dateStr: string): Promise<string> {
 		return `Error listing events: ${err.message}`;
 	}
 }
+
+function formatMinutesToTime(minutes: number): string {
+	const hours = Math.floor(minutes / 60);
+	const mins = minutes % 60;
+	const period = hours >= 12 ? "PM" : "AM";
+	const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+	return `${displayHour}:${mins.toString().padStart(2, "0")} ${period}`;
+}
+
+export async function findAvailableSlots(
+	dateStr: string,
+	durationMinutes: number = 30,
+): Promise<string> {
+	try {
+		const fileContent = await fs.readFile(CALENDAR_PATH, "utf-8");
+		const lines = fileContent.split("\n");
+		const searchDate = formatDateForSearch(dateStr);
+
+		// Parse working hours from file (default 9am-5pm)
+		let workStart = 9 * 60; // 9:00 AM in minutes
+		let workEnd = 17 * 60; // 5:00 PM in minutes
+
+		for (const line of lines) {
+			if (line.toLowerCase().includes("working hours:")) {
+				const match = line.match(
+					/(\d{1,2}:\d{2}\s*(?:AM|PM))\s*-\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i,
+				);
+				if (match) {
+					try {
+						workStart = parseTime(match[1]);
+						workEnd = parseTime(match[2]);
+					} catch (e) {
+						// Keep defaults
+					}
+				}
+			}
+		}
+
+		// Find all existing events for this date
+		const busySlots: Array<{ start: number; end: number }> = [];
+		let dateFound = false;
+
+		for (const line of lines) {
+			if (line.includes(searchDate)) {
+				dateFound = true;
+				continue;
+			}
+
+			if (dateFound) {
+				if (line.trim() === "") break;
+				if (line.trim().startsWith("-")) {
+					const content = line.replace(/^-\s*/, "").trim();
+					const parts = content.split(" - ");
+					if (parts.length >= 2) {
+						const existingStartStr = parts[0];
+						const rest = parts.slice(1).join(" - ");
+						const timeTitleSplit = rest.split(": ");
+						if (timeTitleSplit.length >= 1) {
+							const existingEndStr = timeTitleSplit[0];
+							try {
+								const start = parseTime(existingStartStr);
+								const end = parseTime(existingEndStr);
+								busySlots.push({ start, end });
+							} catch (e) {
+								// Skip malformed lines
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Sort busy slots by start time
+		busySlots.sort((a, b) => a.start - b.start);
+
+		// Find free slots
+		const freeSlots: Array<{ start: number; end: number }> = [];
+		let currentTime = workStart;
+
+		for (const busy of busySlots) {
+			// If there's a gap before this busy slot
+			if (busy.start > currentTime) {
+				const gapDuration = busy.start - currentTime;
+				if (gapDuration >= durationMinutes) {
+					freeSlots.push({ start: currentTime, end: busy.start });
+				}
+			}
+			// Move current time to end of busy slot
+			if (busy.end > currentTime) {
+				currentTime = busy.end;
+			}
+		}
+
+		// Check for time after last meeting
+		if (currentTime < workEnd) {
+			const gapDuration = workEnd - currentTime;
+			if (gapDuration >= durationMinutes) {
+				freeSlots.push({ start: currentTime, end: workEnd });
+			}
+		}
+
+		if (freeSlots.length === 0) {
+			return `No available ${durationMinutes}-minute slots on ${searchDate} within working hours.`;
+		}
+
+		// Format output - show first 5 available slots
+		const suggestions: string[] = [];
+		let optionNum = 1;
+
+		for (const slot of freeSlots) {
+			// Generate possible meeting times within this slot
+			let slotStart = slot.start;
+			while (slotStart + durationMinutes <= slot.end && optionNum <= 5) {
+				const startStr = formatMinutesToTime(slotStart);
+				const endStr = formatMinutesToTime(slotStart + durationMinutes);
+				suggestions.push(`${optionNum}. ${startStr} - ${endStr}`);
+				optionNum++;
+				slotStart += 30; // Move in 30-minute increments
+			}
+			if (optionNum > 5) break;
+		}
+
+		return `Available ${durationMinutes}-minute slots on ${searchDate}:\n${suggestions.join(
+			"\n",
+		)}\n\nWhich option works for you?`;
+	} catch (err: any) {
+		return `Error finding slots: ${err.message}`;
+	}
+}

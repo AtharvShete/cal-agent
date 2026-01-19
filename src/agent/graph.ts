@@ -9,7 +9,8 @@ function routeIntent(state: typeof AgentState.State) {
 	if (
 		state.intent === "schedule" ||
 		state.intent === "cancel" ||
-		state.intent === "query"
+		state.intent === "query" ||
+		state.intent === "find_slots"
 	) {
 		return "extractDetails";
 	}
