@@ -1,121 +1,176 @@
-# AI/ML Hiring Task: Meeting Scheduler Agent
+# Meeting Scheduler Agent
 
-## Overview
-
-Build a command-line scheduling agent using **LangGraph** and **PostgreSQL checkpointing**.
-
-**Time Limit**: 4 hours
-**Language**: TypeScript
+A command-line scheduling agent built with **LangGraph**, **Groq LLM**, and **PostgreSQL** for state persistence.
 
 ---
 
-## The Task
+## Features
 
-- Agent reads a calendar from a text file
-- Agent proposes available meeting times based on user request
-- Agent terminates after proposing times
-- User can return later, respond, and continue the conversation
-- Use LangGraph checkpointing to persist and resume state
-- **The agent must be generalized — no hard-coded inputs or outputs. It should dynamically handle any scheduling request, not just the examples provided.**
-
----
-
-## Important Requirements
-
-⚠️ **No Hard-Coding**: Your agent must be a generalized solution:
-- Do not hard-code specific dates, times, or meeting participants
-- The agent should parse and understand any user request dynamically
-- Calendar parsing should work with any valid calendar format, not just the provided example
-- The agent should reason about availability based on the actual calendar data, not pre-programmed responses
-
-The examples provided are just demonstrations — your agent will be tested with different inputs.
+- ✅ **Natural language scheduling** - Schedule, cancel, and query events
+- ✅ **Conflict detection** - Prevents double-booking
+- ✅ **Find available slots** - Suggests free time slots based on duration
+- ✅ **Working hours awareness** - Respects 9 AM - 5 PM working hours
+- ✅ **Session persistence** - Resume conversations with `--thread` flag
+- ✅ **PostgreSQL checkpointing** - State saved to database
 
 ---
 
-## Example Workflow (For Reference Only)
+## Setup Instructions
 
-### Step 1: User starts a new request
+### 1. Clone and Install Dependencies
 
 ```bash
-$ npx tsx src/index.ts "Schedule a 30 minute meeting with Jordan on Monday afternoon"
+git clone <repository-url>
+cd cal-agent
+pnpm install
 ```
 
-**Agent Output:**
-Thread ID: sched_7f8a9b2c
+### 2. Environment Variables
 
+Create a `.env` file in the root directory:
+
+```env
+# Groq API Key (required)
+# Get yours at: https://console.groq.com/keys
+GROQ_API_KEY=your_groq_api_key_here
+
+# PostgreSQL Database URL (required)
+# Format: postgresql://user:password@host:port/database
+DATABASE_URL=postgresql://user:password@localhost:5432/cal_agent
 ```
 
-I checked your calendar for Monday Jan 20, 2025.
+#### Getting API Keys:
 
-You have these existing commitments:
-- 9:00 AM - 10:00 AM: Team Standup
-- 2:00 PM - 3:00 PM: 1:1 with Sarah
+**Groq API Key:**
 
-Here are available 30-minute slots on Monday afternoon:
+1. Go to [https://console.groq.com](https://console.groq.com)
+2. Sign up or log in
+3. Navigate to API Keys
+4. Create a new key and copy it
 
-1. 12:00 PM - 12:30 PM
-2. 3:00 PM - 3:30 PM
-3. 4:00 PM - 4:30 PM
+**PostgreSQL Database:**
 
-Which option works for you?
-```
+- **Local**: Install PostgreSQL and create a database
+- **Cloud**: Use [Neon](https://neon.tech), [Supabase](https://supabase.com), or [Railway](https://railway.app)
 
-**[Agent terminates]**
-
----
-
-### Step 2: User returns and continues
+### 3. Run the Agent
 
 ```bash
-$ npx tsx src/index.ts --thread sched_7f8a9b2c "Option 2 works best"
-```
+# Start a new session
+pnpm start
 
-**Agent Output:**
+# Resume an existing session
+pnpm start -- --thread sched_abc123
 ```
-Great! I've noted your preference:
-
-Meeting with Jordan
-Monday Jan 20, 2025, 3:00 PM - 3:30 PM
-```
-
-**[Agent terminates]**
 
 ---
 
-## Provided Files
+## Usage Examples
 
-### `calendar.txt`
+### Query Events
 
 ```
-Week of January 20, 2025
+What do I have on Monday Jan 20th?
+```
+
+### Find Available Slots
+
+```
+Find available 30 minute slots on Jan 20th 2026
+```
+
+### Schedule an Event
+
+```
+Schedule a Team Sync on Jan 24th 2026 at 10am
+```
+
+### Cancel an Event
+
+```
+Cancel the Weekly Kickoff on Jan 24th 2026
+```
+
+### Add Event to New Date
+
+```
+Add a dentist appointment on Jan 27th 2026 at 2pm
+```
+
+### Exit Session
+
+```
+/exit
+```
+
+---
+
+## Resuming Sessions
+
+When you exit, note your Session ID (e.g., `sched_abc123`). To resume:
+
+```bash
+pnpm start -- --thread sched_abc123
+```
+
+The agent will load your previous conversation state from PostgreSQL.
+
+---
+
+## Calendar Format
+
+The agent reads from `calendar.txt`:
+
+```
+Week of January 20, 2026
 Working hours: 9:00 AM - 5:00 PM
+Timezone: America/New_York
 
-Monday Jan 20, 2025
+Monday Jan 20, 2026
 - 9:00 AM - 10:00 AM: Team Standup
 - 2:00 PM - 3:00 PM: 1:1 with Sarah
 
-Tuesday Jan 21, 2025
+Tuesday Jan 21, 2026
 - 10:00 AM - 11:30 AM: Product Review
 - 4:00 PM - 5:00 PM: Client Call
-
-Wednesday Jan 22, 2025
-- 9:30 AM - 10:00 AM: Daily Sync
-- 1:00 PM - 2:00 PM: Design Review
-
-Thursday Jan 23, 2025
-- 11:00 AM - 12:00 PM: Team Lunch
-- 3:00 PM - 4:00 PM: Sprint Planning
-
-Friday Jan 24, 2025
-- 9:00 AM - 9:30 AM: Weekly Kickoff
-- 2:00 PM - 3:00 PM: Retrospective
 ```
 
 ---
 
-## Submission
+## Tech Stack
 
-Provide a GitHub repository with:
-- Source code
-- Setup instructions
-- Demo showing the workflow above
+- **LangGraph** - Agent orchestration and state management
+- **Groq (Llama 3.3 70B)** - LLM for natural language understanding
+- **PostgreSQL** - Session state persistence
+- **Ink** - Terminal UI framework
+- **TypeScript** - Type-safe development
+
+---
+
+## Project Structure
+
+```
+cal-agent/
+├── src/
+│   ├── agent/
+│   │   ├── graph.ts          # LangGraph workflow
+│   │   ├── state.ts          # State schema
+│   │   ├── nodes/
+│   │   │   ├── parseIntent.ts    # Intent classification
+│   │   │   ├── extractDetails.ts # Detail extraction
+│   │   │   ├── manageCalendar.ts # Calendar operations
+│   │   │   └── respond.ts        # Response generation
+│   │   └── tools/
+│   │       └── calendar.ts   # Calendar file operations
+│   ├── db/
+│   │   ├── client.ts         # PostgreSQL connection
+│   │   └── checkpoint.ts     # State persistence
+│   ├── ui/
+│   │   ├── App.tsx           # Main UI component
+│   │   └── ...
+│   ├── index.tsx             # Entry point
+│   └── runAgent.ts           # Agent runner
+├── calendar.txt              # Calendar data
+├── .env                      # Environment variables
+└── package.json
+```
