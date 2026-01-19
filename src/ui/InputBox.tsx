@@ -15,8 +15,11 @@ export default function InputBox({ onSubmit, disabled }: Props) {
             <Text color="blue">{"> "}</Text>
             <TextInput
                 value={value}
-                onChange={setValue}
+                onChange={(v) => {
+                    if (!disabled) setValue(v);
+                }}
                 onSubmit={(val) => {
+                    if (disabled) return;
                     if (!val) return;
                     onSubmit(val);
                     setValue("");

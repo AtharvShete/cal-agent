@@ -1,32 +1,42 @@
-import { loadState, saveState } from "./db/checkpoint.js";
-import { AgentState } from "./agent/state.js";
+import { loadState, saveState } from "./db/checkpoint";
+import { AgentState, AgentStateType } from "./agent/state";
+import { buildGraph } from "./agent/graph";
 
-function createInitialState(threadId: string): AgentState {
+const graph = buildGraph();
+
+function createInitialState(threadId: string): AgentStateType {
 	return {
 		threadId,
 		messages: [],
+		userInput: "",
+		intent: undefined,
 	};
 }
 
 export async function runAgent(threadId: string, input: string) {
-	let state = await loadState(threadId);
+	let state = (await loadState(threadId)) as AgentStateType | null;
 
 	if (!state) {
 		state = createInitialState(threadId);
 	}
 
 	state.userInput = input;
-	state.messages.push({ role: "user", text: input });
 
-	// Placeholder for LangGraph
-	const agentReply = "State saved. LangGraph coming next.";
+	const inputState = {
+		...state,
+		messages: [...state.messages, { role: "user", text: input }],
+	};
 
-	state.messages.push({ role: "agent", text: agentReply });
+	const finalState = await graph.invoke(inputState);
 
-	await saveState(threadId, state);
+	await saveState(threadId, finalState as AgentStateType);
+
+	const lastMessage = (finalState as AgentStateType).messages[
+		(finalState as AgentStateType).messages.length - 1
+	];
 
 	return {
-		response: agentReply,
-		state,
+		response: lastMessage.text,
+		state: finalState,
 	};
 }

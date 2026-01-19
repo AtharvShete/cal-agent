@@ -42,6 +42,7 @@ export default function App() {
                 { role: "agent", text: result.response }
             ]);
         } catch (err) {
+            console.error("Agent error:", err);
             setMessages((m) => [
                 ...m,
                 {
