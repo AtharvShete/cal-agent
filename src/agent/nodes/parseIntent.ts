@@ -1,22 +1,19 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatGroq } from "@langchain/groq";
 import type { AgentStateType, Intent } from "../state";
 
-let model: ChatGoogleGenerativeAI | null = null;
+let model: ChatGroq | null = null;
 
 function getModel() {
 	if (!model) {
-		const apiKey = process.env.GOOGLE_API_KEY;
+		const apiKey = process.env.GROQ_API_KEY;
 		if (!apiKey) {
-			throw new Error(
-				"Missing GOOGLE_API_KEY environment variable for Gemini.",
-			);
+			throw new Error("Missing GROQ_API_KEY environment variable.");
 		}
 
-		model = new ChatGoogleGenerativeAI({
-			model: "gemini-flash-latest",
+		model = new ChatGroq({
+			model: "llama-3.3-70b-versatile",
 			temperature: 0,
 			apiKey,
-			apiVersion: "v1beta",
 		});
 	}
 	return model;
@@ -29,12 +26,22 @@ export async function parseIntent(
 
 	const modelInstance = getModel();
 
+	const recentHistory = state.messages
+		.slice(-5)
+		.map((m) => `${m.role.toUpperCase()}: ${m.text}`)
+		.join("\n");
+
 	const prompt = `
 Classify the user's intent into one of:
 - schedule
 - cancel
 - query
 - unknown
+
+Use the recent conversation history to understand context (e.g., "cancel that" refers to a previous event).
+
+History:
+${recentHistory}
 
 User message:
 "${state.userInput}"

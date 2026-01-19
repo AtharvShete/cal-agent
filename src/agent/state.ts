@@ -9,10 +9,10 @@ export const AgentState = new StateSchema({
 	intent: z.enum(["schedule", "cancel", "query", "unknown"]).optional(),
 	eventDetails: z
 		.object({
-			title: z.string().optional(),
-			date: z.string().optional(),
-			startTime: z.string().optional(),
-			endTime: z.string().optional(),
+			title: z.string().optional().nullable(),
+			date: z.string().optional().nullable(),
+			startTime: z.string().optional().nullable(),
+			endTime: z.string().optional().nullable(),
 		})
 		.optional(),
 	messages: new ReducedValue(
@@ -36,4 +36,18 @@ export const AgentState = new StateSchema({
 	),
 });
 
-export type AgentStateType = typeof AgentState.State;
+// Define the interface explicitly for better type safety
+export interface EventDetails {
+	title?: string | null;
+	date?: string | null;
+	startTime?: string | null;
+	endTime?: string | null;
+}
+
+export interface AgentStateType {
+	threadId: string;
+	userInput?: string;
+	intent?: Intent;
+	eventDetails?: EventDetails;
+	messages: Array<{ role: "user" | "agent"; text: string }>;
+}

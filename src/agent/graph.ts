@@ -6,7 +6,11 @@ import { manageCalendar } from "./nodes/manageCalendar";
 import { respond } from "./nodes/respond";
 
 function routeIntent(state: typeof AgentState.State) {
-	if (state.intent === "schedule") {
+	if (
+		state.intent === "schedule" ||
+		state.intent === "cancel" ||
+		state.intent === "query"
+	) {
 		return "extractDetails";
 	}
 	return "respond";

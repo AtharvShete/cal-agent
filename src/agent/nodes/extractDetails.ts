@@ -1,19 +1,18 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatGroq } from "@langchain/groq";
 import type { AgentStateType } from "../state";
 
-let model: ChatGoogleGenerativeAI | null = null;
+let model: ChatGroq | null = null;
 
 function getModel() {
 	if (!model) {
-		const apiKey = process.env.GOOGLE_API_KEY;
+		const apiKey = process.env.GROQ_API_KEY;
 		if (!apiKey) {
-			throw new Error("Missing GOOGLE_API_KEY");
+			throw new Error("Missing GROQ_API_KEY");
 		}
-		model = new ChatGoogleGenerativeAI({
-			model: "gemini-flash-latest",
+		model = new ChatGroq({
+			model: "llama-3.3-70b-versatile",
 			temperature: 0,
 			apiKey,
-			apiVersion: "v1beta",
 		});
 	}
 	return model;
@@ -26,43 +25,74 @@ export async function extractDetails(
 
 	const modelInstance = getModel();
 
-	// We'll hardcode a reference date for now or use the system instruction's date if I could access it,
-	// but for now I'll just ask it to extract relative or absolute.
-	// Actually, the user prompts usually contain specific dates as seen in the example "jan 20th 2026".
+	const recentHistory = state.messages
+		.slice(-5)
+		.map((m) => `${m.role.toUpperCase()}: ${m.text}`)
+		.join("\n");
+
+	// Build intent-aware prompt
+	const isQuery = state.intent === "query";
+
+	// Get current date dynamically
+	const today = new Date();
+	const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD
+	const tomorrow = new Date(today);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
 	const prompt = `
-Extract meeting details from the user's input as JSON.
-Fields:
-- title (string)
-- date (string, YYYY-MM-DD format if possible, or keep as user said)
-- startTime (string, HH:mm AM/PM)
-- endTime (string, HH:mm AM/PM, inferred 1 hour if not specified)
+Extract event details from the conversation. Return ONLY a JSON object, no explanations.
+
+Current Date: ${todayStr} (today)
+User Intent: ${state.intent}
+
+Rules:
+- "today" = ${todayStr}
+- "tomorrow" = ${tomorrowStr}
+- If user says "that" or "this event", look at conversation history to find the event name
+- For QUERY intent: you mainly need the date field
+- For CANCEL intent: you need title and date
+- For SCHEDULE intent: you need title, date, startTime
+
+Conversation History:
+${recentHistory}
 
 User Input: "${state.userInput}"
 
-Return ONLY valid JSON.
-Example:
+Return JSON with these fields (use null for unknown):
 {
-  "title": "Dentist Appointment",
-  "date": "2026-01-20",
-  "startTime": "10:00 AM",
-  "endTime": "11:00 AM"
+  "title": "event name or null",
+  "date": "YYYY-MM-DD or null",
+  "startTime": "H:MM AM/PM or null",
+  "endTime": "H:MM AM/PM or null"
 }
 `;
 
 	const result = await modelInstance.invoke(prompt);
 	const content = result.content.toString();
 
-	let eventDetails = {};
+	let eventDetails: any = {};
 	try {
-		// clean up markdown blocks if any
-		const cleaned = content
-			.replace(/```json/g, "")
-			.replace(/```/g, "")
-			.trim();
-		eventDetails = JSON.parse(cleaned);
+		// Try to extract JSON from the response
+		// First, try to find JSON object pattern
+		const jsonMatch = content.match(/\{[\s\S]*\}/);
+		if (jsonMatch) {
+			const cleaned = jsonMatch[0]
+				.replace(/```json/g, "")
+				.replace(/```/g, "")
+				.trim();
+			eventDetails = JSON.parse(cleaned);
+		} else {
+			// Fallback: try parsing the whole thing
+			const cleaned = content
+				.replace(/```json/g, "")
+				.replace(/```/g, "")
+				.trim();
+			eventDetails = JSON.parse(cleaned);
+		}
 	} catch (e) {
-		console.error("Failed to parse JSON details", e);
+		console.error("Failed to parse JSON details:", content);
+		// Return empty details so the agent can ask for clarification
 	}
 
 	return { eventDetails };
