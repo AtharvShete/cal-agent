@@ -8,10 +8,15 @@ import { runAgent } from "../runAgent";
 
 const makeThreadId = () => `sched_${uuidv4().slice(0, 6)}`;
 
-export default function App() {
-    const [threadId] = useState(makeThreadId);
+interface AppProps {
+    initialThreadId?: string;
+}
+
+export default function App({ initialThreadId }: AppProps) {
+    const [threadId] = useState(() => initialThreadId || makeThreadId());
     const [messages, setMessages] = useState<UIMessage[]>([]);
     const [thinking, setThinking] = useState(false);
+    const [isResume] = useState(!!initialThreadId);
     const { exit } = useApp();
 
 
@@ -60,7 +65,7 @@ export default function App() {
     return (
         <Box flexDirection="column" padding={1}>
             <Text color="green">Meeting Scheduler Agent</Text>
-            <Text dimColor>Session: {threadId}</Text>
+            <Text dimColor>Session: {threadId}{isResume ? " (resumed)" : ""}</Text>
 
             <ChatView messages={messages} />
 
