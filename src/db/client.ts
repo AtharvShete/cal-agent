@@ -8,14 +8,10 @@ export function getPool() {
 		if (!process.env.DATABASE_URL) {
 			throw new Error("DATABASE_URL environment variable is not set");
 		}
-		// console.log(
-		// 	"Creating database pool with URL:",
-		// 	process.env.DATABASE_URL.substring(0, 50) + "...",
-		// );
 		pool = new Pool({
 			connectionString: process.env.DATABASE_URL,
 			ssl: true,
-			application_name: "cal-agent",
+			application_name: "daymark",
 			idle_in_transaction_session_timeout: 30000,
 		});
 
@@ -45,11 +41,6 @@ export async function initDb() {
   `);
 		// console.log("Database initialization complete");
 	} catch (err) {
-		if (err instanceof Error) {
-			console.warn("Database initialization failed:", err.message);
-			console.warn("Error code:", (err as any).code);
-		} else {
-			console.warn("Database initialization failed:", JSON.stringify(err));
-		}
+		throw err;
 	}
 }

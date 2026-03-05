@@ -5,10 +5,6 @@ dotenv.config({
     quiet: true,
 });
 
-import { render } from "ink";
-import App from "./ui/App";
-import { initDb } from "./db/client";
-
 function parseArgs(): { threadId?: string } {
     const args = process.argv.slice(2);
     let threadId: string | undefined;
@@ -24,6 +20,14 @@ function parseArgs(): { threadId?: string } {
 }
 
 async function main() {
+    const missing = ["GROQ_API_KEY", "DATABASE_URL"].filter((name) => !process.env[name]);
+    if (missing.length) {
+        console.error(`Missing ${missing.join(" and ")}. Copy .env.example to .env and fill in your credentials.`);
+        process.exit(1);
+    }
+    const { render } = await import("ink");
+    const { default: App } = await import("./ui/App");
+    const { initDb } = await import("./db/client");
     await initDb();
 
     const { threadId } = parseArgs();
@@ -35,4 +39,7 @@ async function main() {
     render(<App initialThreadId={threadId} />);
 }
 
-main();
+main().catch(() => {
+    console.error("Daymark could not start. Check DATABASE_URL in .env. Your PostgreSQL server must be reachable and support TLS. See README.md for setup.");
+    process.exit(1);
+});

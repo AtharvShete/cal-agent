@@ -4,6 +4,8 @@ import {
 	deleteEventFromCalendar,
 	listEvents,
 	findAvailableSlots,
+	parseTime,
+	formatMinutesToTime,
 } from "../tools/calendar";
 
 export async function manageCalendar(
@@ -101,32 +103,21 @@ export async function manageCalendar(
 			};
 		}
 
-		// If endTime is not provided, default to 1 hour after startTime
+		// An explicit end time wins; otherwise honor duration (default one hour).
 		let finalEndTime = endTime;
 		if (!finalEndTime) {
-			// Parse startTime and add 1 hour
-			const match = startTime!.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-			if (match) {
-				let hours = parseInt(match[1]);
-				const minutes = match[2];
-				const period = match[3].toUpperCase();
-
-				// Add 1 hour
-				hours += 1;
-				let newPeriod = period;
-
-				if (hours === 12 && period === "AM") {
-					newPeriod = "PM";
-				} else if (hours === 12 && period === "PM") {
-					newPeriod = "AM"; // Midnight edge case (unlikely for meetings)
-				} else if (hours > 12) {
-					hours -= 12;
-					newPeriod = period === "AM" ? "PM" : "AM";
+			const durationMins = duration ?? 60;
+			if (!Number.isInteger(durationMins) || durationMins <= 0) {
+				return { messages: [{ role: "agent", text: "Please provide a positive whole-number duration in minutes." }] };
+			}
+			try {
+				const endMinutes = parseTime(startTime!) + durationMins;
+				if (endMinutes >= 24 * 60) {
+					return { messages: [{ role: "agent", text: "Events must start and end on the same day. Please choose an earlier time or shorter duration." }] };
 				}
-
-				finalEndTime = `${hours}:${minutes} ${newPeriod}`;
-			} else {
-				finalEndTime = startTime!; // Fallback, shouldn't happen
+				finalEndTime = formatMinutesToTime(endMinutes);
+			} catch (error) {
+				return { messages: [{ role: "agent", text: error instanceof Error ? error.message : "Invalid start time." }] };
 			}
 		}
 

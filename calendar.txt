@@ -1,23 +1,23 @@
-Week of January 20, 2026
+Week of January 19, 2026
 Working hours: 9:00 AM - 5:00 PM
-Timezone: America/New_York
+Timezone: Asia/Kolkata
 
-Monday Jan 20, 2026
-- 9:00 AM - 10:00 AM: Team Standup
-- 2:00 PM - 3:00 PM: 1:1 with Sarah
+Tuesday Jan 20, 2026
+- 9:00 AM - 10:00 AM: Study session
+- 2:00 PM - 3:00 PM: Portfolio project work
 
-Tuesday Jan 21, 2026
-- 10:00 AM - 11:30 AM: Product Review
-- 4:00 PM - 5:00 PM: Client Call
+Wednesday Jan 21, 2026
+- 10:00 AM - 11:30 AM: Reading and research
+- 4:00 PM - 5:00 PM: Dentist appointment
 
-Wednesday Jan 22, 2026
-- 9:30 AM - 10:00 AM: Daily Sync
-- 1:00 PM - 2:00 PM: Design Review
+Thursday Jan 22, 2026
+- 9:30 AM - 10:00 AM: Plan the day
+- 1:00 PM - 2:00 PM: Coding practice
 
-Thursday Jan 23, 2026
-- 11:00 AM - 12:00 PM: Team Lunch
-- 3:00 PM - 4:00 PM: Sprint Planning
+Friday Jan 23, 2026
+- 11:00 AM - 12:00 PM: Lunch with a friend
+- 3:00 PM - 4:00 PM: Project planning
 
-Friday Jan 24, 2026
-- 9:00 AM - 9:30 AM: Weekly Kickoff
-- 2:00 PM - 3:00 PM: Retrospective
+Saturday Jan 24, 2026
+- 9:00 AM - 9:30 AM: Weekly planning
+- 2:00 PM - 3:00 PM: Review study notes

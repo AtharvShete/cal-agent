@@ -11,7 +11,7 @@ export default function ChatView({ messages }: Props) {
             {messages.map((msg, idx) => (
                 <Box key={idx} marginBottom={1}>
                     <Text color={msg.role === "user" ? "blue" : "green"}>
-                        {msg.role === "user" ? "> " : "Agent: "}
+                        {msg.role === "user" ? "> " : "Daymark: "}
                     </Text>
                     <Text>{msg.text}</Text>
                 </Box>

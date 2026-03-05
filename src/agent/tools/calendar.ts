@@ -22,7 +22,7 @@ function formatDateForSearch(dateStr: string): string {
 	return d.toLocaleDateString("en-US", options);
 }
 
-function parseTime(timeStr: string): number {
+export function parseTime(timeStr: string): number {
 	const [time, period] = timeStr.trim().split(/\s+/);
 	const timeParts = time.split(":").map(Number);
 	let hours = timeParts[0];
@@ -275,7 +275,7 @@ export async function listEvents(dateStr: string): Promise<string> {
 	}
 }
 
-function formatMinutesToTime(minutes: number): string {
+export function formatMinutesToTime(minutes: number): string {
 	const hours = Math.floor(minutes / 60);
 	const mins = minutes % 60;
 	const period = hours >= 12 ? "PM" : "AM";
